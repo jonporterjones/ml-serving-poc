@@ -1,3 +1,5 @@
+import os
+
 from aws_cdk import Stack
 from aws_cdk import aws_apigateway as apigateway
 from aws_cdk import aws_iam as iam
@@ -12,24 +14,34 @@ class DemoAppStack(Stack):
 
         # Add the lambda
         # Lambda layer to provide sklearn within lambda limitations
-        my_layer = lambda_.LayerVersion.from_layer_version_arn(self,
-            id="python-3-8-scikit-learn-0-23-1",
-            layer_version_arn="arn:aws:lambda:us-east-1:446751924810:layer:python-3-8-scikit-learn-0-23-1:2")
+        # This expects that layer to already exist.
+        #my_layer = lambda_.LayerVersion.from_layer_version_arn(self,
+        #    id="python-3-8-scikit-learn-0-23-1",
+        #    layer_version_arn="arn:aws:lambda:us-east-1:446751924810:layer:python-3-8-scikit-learn-0-23-1:2")
 
         # I'll use an existing role for simplicity - it has s3 permissions.
         # In reality you would probably build role within this stack.
-        my_role = iam.Role.from_role_arn(self,
-            id='role-ref',
-            role_arn="arn:aws:iam::161089792558:role/service-role/lambda-01-role-8t9yyzoh")
+        # Lambda will auto-generate a role if none provided.
+        # my_role = iam.Role.from_role_arn(self,
+        #     id='role-ref',
+        #     role_arn="arn:aws:iam::161089792558:role/service-role/lambda-01-role-8t9yyzoh")
 
-        handler = lambda_.Function(self, "LambdaHandler",
-                    runtime=lambda_.Runtime.PYTHON_3_8,
-                    code=lambda_.Code.from_asset("lambda"),
+        bucket_name_model = os.getenv(key="BUCKET_NAME_MODEL")
+        file_name_model = os.getenv(key="FILE_NAME_MODEL")
+
+        print(bucket_name_model)
+        print(file_name_model)
+
+        handler = lambda_.Function(self, "LambdaFunction",
+                    runtime=lambda_.Runtime.PYTHON_3_9,
+                    code=lambda_.Code.from_asset("./resources/ml_serving_package.zip"),
                     handler="lambda_function.lambda_handler",
                     memory_size=2048,
-                    role=my_role)
+                    environment={
+                            "S3_RESOURCE_ARN": f"arn:aws:s3:::{bucket_name_model}/{file_name_model}"
+                    })
 
-        handler.add_layers(my_layer)
+        #handler.add_layers(my_layer)
 
         # Add the API Gateway
         api = apigateway.RestApi(self, "ApiGateway",

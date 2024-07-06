@@ -1,7 +1,10 @@
-import os
-import boto3
 import json
+import os
 import pickle
+
+import boto3
+
+s3_resource_arn = os.getenv("S3_MODEL_ARN")
 
 def lambda_handler(event, context):
     

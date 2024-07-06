@@ -40,3 +40,12 @@ The lambda handler function definition
 API Gateway integrated with Lambda to provide a callable endpoint
 
 The trained model will be expected to be found in s3.
+
+### Lambda Deployment package
+
+Lambda needs a deployment package containing the code to be executed and any dependencies.
+This poc uses the simplest method, a single zip file, but this can also be done with
+a lambda layer
+or a container image
+
+a Makefile target create_lambda_package exists to create the deployment package.
